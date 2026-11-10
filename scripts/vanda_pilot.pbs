@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#PBS -q auto_free
+#PBS -N heat_mpi_pilot
+#PBS -j oe
+#PBS -l walltime=00:10:00
+#PBS -l select=1:ncpus=4:mpiprocs=4:ompthreads=1:mem=4gb
+set -eo pipefail
+cd "${PBS_O_WORKDIR:?Submit from the project root}"
+export ALLOCATED_CORES=4 MODE=strong GRID_N=64 STEPS=100
+export RANKS="1 2 4" VALIDATE=1 RUN_TIMEOUT=120
+# Source the common job body so the login-provided module function is retained.
+source scripts/vanda_mpi.pbs

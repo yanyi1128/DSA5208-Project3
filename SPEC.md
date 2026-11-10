@@ -4,7 +4,7 @@ Implementation and integration specification for Serial, MPI, and MPI+CUDA.
 
 ## 1. Status, authority, and requirement labels
 
-This document is a **team numerical and implementation contract**. Concrete MPI function signatures will be documented after the MPI implementation is complete. It specifies one consistent numerical problem and comparable implementations.
+This document is a **team numerical and implementation contract**. Reusable MPI decomposition and halo-exchange interfaces are documented in Section 10.1. It specifies one consistent numerical problem and comparable implementations.
 
 **Source limitation:** The team division-of-work PDF supplies the original experiment plan, including the 256-CPU-core MPI experiment. The official assignment handout has not been independently verified here.
 
@@ -376,11 +376,27 @@ Keep a manifest of configurations and raw CSV results. Produce runtime, strong s
 
 B delivers a compiled, runnable, validated MPI module. C performs MPI+CUDA integration, including connecting GPU staging buffers and implementing GPU timing synchronization. B supports the MPI handoff and fixes defects in the MPI module. The separate team division-of-work PDF defines the full task allocation; this specification does not repeat that allocation.
 
-### 10.1 MPI interface status
+### 10.1 MPI module interface
 
-Concrete MPI function names, signatures, shared structures, and header declarations are intentionally deferred until B's MPI implementation is complete. Section 4 already defines the required decomposition, data layout, message tags, communication semantics, and gathering behavior; these remain the shared development contract. The CUDA interfaces in Section 6.3 describe semantic behavior and will be aligned with the completed MPI interface during integration.
+`include/mpi_interface.h` declares the reusable API in namespace `heat_mpi`;
+`src/mpi_interface.cpp` implements it without an executable entry point.
 
-After the MPI implementation is validated, document its actual interfaces here and in the relevant header, including buffer lengths, ownership and lifetime, communication completion guarantees, communicator usage, and error handling. No new MPI API is prescribed at this stage.
+- `Domain` contains `rows` (local_rows), `start` (start_row), `upper`, and `lower`.
+- `decompose(n, rank, size)` computes the Section 4 partition without communication.
+- `make_domain(n, comm)` obtains communicator-local rank/size and returns its domain.
+- `exchange_rows(send_top, send_bottom, receive_top, receive_bottom, n, domain, comm)` exchanges four host row buffers of n doubles, supporting CUDA host staging.
+- `exchange_halos(current, n, domain, comm)` adapts a contiguous CPU field with halos to the same exchange routine.
+
+All exchanges complete every send/receive before returning. Receive buffers must
+be distinct and must not overlap sends; sends may coincide for a one-row domain.
+Initialize receive buffers to zero for absent neighbors. The caller owns buffers
+and communicator, coordinates CUDA copies, and reserves tags 100/101. MPI failures
+abort the communicator; invalid decomposition inputs throw an exception that the
+caller must handle coherently. These interfaces do not initialize or finalize MPI.
+
+See `docs/mpi-handoff.md` for build commands, staging usage and verification status.
+The CPU executable now uses this module. Initialization, gathering and validation
+remain in the CPU executable; they are not part of this reusable API yet.
 
 ### 10.2 Handoff evidence
 

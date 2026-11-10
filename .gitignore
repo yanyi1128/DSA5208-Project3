@@ -1,0 +1,22 @@
+# Compiled executables and object files
+*.exe
+*.o
+*.obj
+/heat_mpi
+/mpi_interface_test
+/heat_serial
+/heat_mpi_cuda
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Raw experiment runs (includes job binaries and diagnostics)
+/results/runs/
+*.log
+*.stdout
+*.stderr
+
+# PBS output files
+*.o[0-9]*
+*.e[0-9]*
