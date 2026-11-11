@@ -11,15 +11,18 @@ set -eo pipefail
 : "${STEPS:?Set positive iteration count}"
 : "${RANKS:?Set space-separated process counts, including 1}"
 cd "$PBS_O_WORKDIR"
-# Module name was present in the user's Vanda module listing. Confirm loading
-# and compiler compatibility on Vanda before the first submission.
+# Match the successful project-queue multinode pilot environment.
+module load ucx/1.10.1
 module load "${MPI_MODULE:-openmpi/gcc/64/4.1.8}"
+export LD_LIBRARY_PATH="/opt/pbs/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 set -u
 command -v mpic++ mpirun python3
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 run_dir="results/runs/${PBS_JOBID}_${MODE}"
 mkdir -p results/runs
 mkdir "$run_dir"
+module list > "$run_dir/modules.txt" 2>&1
+sort "$PBS_NODEFILE" | uniq -c > "$run_dir/hosts.txt"
 # Job-specific binary avoids concurrent jobs overwriting an executable in use.
 mpic++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/mpi.cpp src/mpi_interface.cpp -o "$run_dir/heat_mpi"
 printf '%s\n' 'mpic++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/mpi.cpp src/mpi_interface.cpp' > "$run_dir/build-command.txt"
@@ -29,5 +32,5 @@ if [[ "${VALIDATE:-0}" == 1 ]]; then validation=(--validate); fi
 bash scripts/run_mpi.sh --mode "$MODE" --n "$GRID_N" --steps "$STEPS" \
     --ranks "${process_counts[@]}" --allocated-cores "$ALLOCATED_CORES" \
     --exe "$run_dir/heat_mpi" --output "$run_dir/data" \
-    --launcher-args="${MPI_LAUNCH_ARGS:---bind-to core --map-by slot}" \
+    --launcher-args="${MPI_LAUNCH_ARGS:---bind-to core --map-by slot --report-bindings}" \
     --timeout "${RUN_TIMEOUT:-3600}" "${validation[@]}"

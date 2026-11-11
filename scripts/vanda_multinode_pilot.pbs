@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#PBS -q auto
+#PBS -P personal-page.yy
+#PBS -N heat_multi_pilot
+#PBS -j oe
+#PBS -l walltime=00:20:00
+#PBS -l select=2:ncpus=4:mpiprocs=4:ompthreads=1:mem=8gb
+#PBS -l place=scatter
+set -eo pipefail
+cd "${PBS_O_WORKDIR:?Submit from the project root}"
+module load openmpi/gcc/64/4.1.8
+export LD_LIBRARY_PATH="/opt/pbs/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+set -u
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+run_dir="results/runs/${PBS_JOBID}_multinode_pilot"
+mkdir -p results/runs
+mkdir "$run_dir"
+mpic++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/mpi.cpp src/mpi_interface.cpp -o "$run_dir/heat_mpi"
+printf '%s\n' 'mpic++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/mpi.cpp src/mpi_interface.cpp' > "$run_dir/build-command.txt"
+
+echo '=== Allocated hosts ==='
+sort "$PBS_NODEFILE" | uniq -c | tee "$run_dir/hosts.txt"
+host_count=$(sort -u "$PBS_NODEFILE" | wc -l)
+if [[ "$host_count" -ne 2 ]]; then
+    echo "Expected two distinct hosts; found $host_count" >&2
+    exit 1
+fi
+echo '=== Actual rank placement and binding ==='
+mpirun -np 8 --map-by ppr:4:node --bind-to core --report-bindings hostname
+
+# These tests all use both hosts, and fail the job on any numerical mismatch.
+echo '=== Cross-node correctness ==='
+for case_args in '8 0' '8 1' '8 2' '17 7' '33 10' '64 100'; do
+    read -r n steps <<< "$case_args"
+    mpirun -np 8 --map-by ppr:4:node --bind-to core \
+        "$run_dir/heat_mpi" --n "$n" --steps "$steps" --validate
+done
+
+# Candidate-size timing only: no expensive full-grid serial oracle here.
+# Each configuration gets one warm-up and five measurements. For P=8 both
+# four-slot nodes are used; for P=1 and P=4 slot mapping fills one node first.
+echo '=== Candidate grid timings ==='
+for n in 1024 4096; do
+    bash scripts/run_mpi.sh --mode strong --n "$n" --steps 100 \
+        --ranks 1 4 8 --allocated-cores 8 --exe "$run_dir/heat_mpi" \
+        --launcher-args='--bind-to core --map-by slot --report-bindings' \
+        --timeout 180 --output "$run_dir/n${n}"
+done
+echo 'Multinode pilot completed successfully.'
+echo "Results: $run_dir"
