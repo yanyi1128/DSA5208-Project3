@@ -1,0 +1,13 @@
+block_shape,case,expected_failure,exit_code
+32x8,1,True,2
+32x8,2,True,2
+32x8,3,True,2
+32x8,4,True,2
+32x8,5,True,2
+32x8,6,True,1
+16x16,1,True,2
+16x16,2,True,2
+16x16,3,True,2
+16x16,4,True,2
+16x16,5,True,2
+16x16,6,True,1

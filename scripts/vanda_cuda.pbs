@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -q auto_free
+#PBS -N heat_cuda
+#PBS -j oe
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1:ngpus=1
+#PBS -l walltime=01:00:00
+# Submit from the source root; the default batch pilot builds and validates.
+# Default: build and correctness validation. Use -v CUDA_PHASE=benchmark
+# for the separate single-GPU size/block experiments after checking walltime.
+set -eo pipefail
+: "${PBS_JOBID:?Run through PBS}"
+: "${PBS_O_WORKDIR:?Submit from the project root}"
+cd "$PBS_O_WORKDIR"
+source scripts/cuda_env_vanda.sh
+module list
+set -u
+exec python3 scripts/cuda_job.py --phase "${CUDA_PHASE:-pilot}"

@@ -1,0 +1,11 @@
+source,mode,timing_mode,n,steps,ranks,gpus,block_x,block_y,measured_repeats,validation,median_s,min_s,max_s,speedup_vs_one_gpu,efficiency_pct,serial_median_s,serial_relative_ratio,mpi_cpu_ranks,mpi_median_s,mpi_relative_ratio
+local_benchmark_20261116_091130_7a29270f/size_16x16/raw.csv,size,ordinary,256,1000,1,1,16,16,5,not_run,0.012918616,0.012038178,0.01310421,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_16x16/raw.csv,size,ordinary,512,1000,1,1,16,16,5,not_run,0.018379627,0.018036198,0.01924977,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_16x16/raw.csv,size,ordinary,1024,1000,1,1,16,16,5,not_run,0.05615761,0.055760143,0.056972192,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_16x16/raw.csv,size,ordinary,2048,1000,1,1,16,16,5,not_run,0.170799391,0.170035068,0.172995446,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_16x16/raw.csv,size,ordinary,4096,1000,1,1,16,16,5,not_run,0.699719365,0.6699395779999999,0.7409667099999999,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_32x8/raw.csv,size,ordinary,256,1000,1,1,32,8,5,not_run,0.01203193,0.011977405,0.012558592,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_32x8/raw.csv,size,ordinary,512,1000,1,1,32,8,5,not_run,0.018255545,0.017848307,0.018585462,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_32x8/raw.csv,size,ordinary,1024,1000,1,1,32,8,5,not_run,0.044103679,0.043474912,0.050100946,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_32x8/raw.csv,size,ordinary,2048,1000,1,1,32,8,5,not_run,0.16830512900000005,0.167591227,0.17269999,NA,NA,NA,NA,NA,NA,NA
+local_benchmark_20261116_091130_7a29270f/size_32x8/raw.csv,size,ordinary,4096,1000,1,1,32,8,5,not_run,0.662353475,0.660501518,0.668793783,NA,NA,NA,NA,NA,NA,NA

@@ -1,0 +1,61 @@
+{
+  "execution_environment": "local",
+  "is_atlas_or_vanda": false,
+  "gpu": "NVIDIA GeForce RTX 3070 Laptop GPU",
+  "gpu_memory_mib": 8192,
+  "cpu": "AMD Ryzen 9 5900HX",
+  "host": "Windows / Docker Desktop WSL2 Linux backend",
+  "container_cpu_quota": 4,
+  "container_memory_gib": 6,
+  "solver_cpu_threads": 1,
+  "mpi_ranks": 1,
+  "gpus": 1,
+  "driver": "591.74",
+  "nvcc": "12.1.105",
+  "gcc": "11.4.0",
+  "openmpi": "4.1.2",
+  "python": "3.10.12",
+  "compile_flags": [
+    "-O2",
+    "-std=c++17",
+    "CUDA: -arch=sm_86"
+  ],
+  "comparison_run": "local_comparison_20261116_215950",
+  "comparison_utc_start": "2026-11-16T13:59:56.801109+00:00",
+  "comparison_utc_end": "2026-11-16T14:06:24.497798+00:00",
+  "block_run": "local_benchmark_20261116_091130_7a29270f",
+  "steps": 1000,
+  "sizes": [
+    256,
+    512,
+    1024,
+    2048,
+    4096
+  ],
+  "protocol": "Full validation for both implementations at every N, then one ordinary warmup each. Five measured fresh processes per implementation. Order alternates serial/GPU, then GPU/serial between repetitions. Timer excludes allocation, validation and output.",
+  "block_protocol": "Two block sweeps executed sequentially. One excluded warmup and five measured fresh processes per size and block.",
+  "validation": "Separate 10 positive and 6 negative cases per block; separate full-grid built-in serial-reference validation at each of the five paired sizes for both implementations. Ordinary timing rows remain not_run.",
+  "limitation": "Uncontrolled laptop thermal/power state; CPU/GPU ratio is not MPI strong-scaling efficiency.",
+  "multi_gpu_validated": false,
+  "binary_sha256": {
+    "heat_serial": "15c96895967a7dd5263b012db0f5f701a67de45e19c87a745222730ab4ec970d",
+    "heat_mpi_cuda": "1f5d177de7a2c4003a07d9c3a68860bf19aeede194128b3658c1c38ca2e85682"
+  },
+  "compiled_source_sha256": {
+    "Makefile.cuda": "e70106f00ef3b6b4ccaf132687500c71cfc00414430f3168f11f2813dcf2530b",
+    "include/config.h": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "include/cuda_host_utils.h": "a98fd82e539e0fde2f268994f0e3e8c652dd6386c1a73f7d851baf4094ff22e4",
+    "include/cuda_solver.h": "5d94cbdc071c450f6ad8af6fc8bb25640dc945d49cdc313b3791ea23c05b7805",
+    "include/heat_common.h": "ea8856c955a11e08080e260d9d5b5dd3724c3cde47e245313497d17010fc7bb1",
+    "include/mpi_interface.h": "a796f620329999c55211614eec14e6ec9472c6d878e3a8e2c31f1d5dfdf53623",
+    "include/validation.h": "99a62e8d364a299835893f3740dffe79070e2967904d2d9ba4b0e19e83d83059",
+    "src/cuda_kernel.cu": "1bd9e25b4d3bacbc49c0df9680c939644257e634c4419455f013986d4bcef21e",
+    "src/mpi.cpp": "0c601a3dd9c45df1ca90ca3232915962e41a0b1c790d42eb2874c60973b98414",
+    "src/mpi_cuda.cu": "e6497f9dd6933e477eaafa86dc770fe9adcc097272659ebe9085441f2cb3bc9d",
+    "src/mpi_interface.cpp": "eb716e76ee7d4841fb68c6ad8a79c4b34e16b81b4a866752e68c992727cc1c88",
+    "src/serial.cpp": "8fb48848ba76af82dbecc298e48292a430b3d9895b4f05def294d2526ced2c23"
+  },
+  "comparison_driver_sha256": "969915b097974d303f4e5ea9684e263485f868ba69876e1aca7203aa2a6a7deb",
+  "private_evidence_retained": true,
+  "logs_in_submission": false
+}

@@ -1,0 +1,62 @@
+# Independent C deliverable. Run on a Linux compute node with matching MPI/CUDA modules.
+SHELL := /bin/bash
+.DEFAULT_GOAL := all
+
+MPICXX ?= mpicxx
+NVCC ?= nvcc
+CXX ?= g++
+CUDA_HOME ?= $(shell command -v $(NVCC) >/dev/null 2>&1 && dirname "$$(dirname "$$(readlink -f "$$(command -v $(NVCC))")")")
+CUDA_LIBDIR ?= $(firstword $(wildcard $(CUDA_HOME)/lib64 $(CUDA_HOME)/targets/x86_64-linux/lib $(CUDA_HOME)/lib))
+# Open MPI supplies include flags; other MPI implementations can set this explicitly.
+MPI_CPPFLAGS ?= $(shell $(MPICXX) --showme:compile 2>/dev/null)
+CUDA_ARCH ?=
+CUDA_HOST_CXX ?=
+CPPFLAGS ?=
+CXXFLAGS ?= -O2 -std=c++17 -Wall -Wextra -Wpedantic
+NVCCFLAGS ?= -O2 -std=c++17
+LDFLAGS ?=
+LDLIBS ?=
+BUILD_DIR ?= build/cuda
+TARGET ?= heat_mpi_cuda
+SERIAL_TARGET ?= heat_serial
+ARCH_FLAGS = $(if $(CUDA_ARCH),-arch=$(CUDA_ARCH),)
+HOST_FLAGS = $(if $(CUDA_HOST_CXX),-ccbin $(CUDA_HOST_CXX),)
+OBJECTS = $(BUILD_DIR)/mpi_cuda.o $(BUILD_DIR)/cuda_kernel.o $(BUILD_DIR)/mpi_interface.o
+CUDA_HEADERS = $(wildcard include/cuda_solver.h include/cuda_host_utils.h) include/heat_common.h include/validation.h include/mpi_interface.h
+
+.PHONY: all check-tools serial show-config host-test
+all: $(TARGET)
+
+check-tools:
+	@command -v $(MPICXX) >/dev/null || { echo "MPI C++ wrapper not found: $(MPICXX)" >&2; exit 1; }
+	@command -v $(NVCC) >/dev/null || { echo "CUDA compiler not found: $(NVCC)" >&2; exit 1; }
+	@test -f "$(CUDA_HOME)/include/cuda_runtime.h" || { echo "Set CUDA_HOME to the loaded CUDA toolkit" >&2; exit 1; }
+	@test -n "$(CUDA_LIBDIR)" && test -d "$(CUDA_LIBDIR)" || { echo "Set CUDA_LIBDIR to the directory containing libcudart.so" >&2; exit 1; }
+
+$(BUILD_DIR):
+	mkdir -p "$@"
+
+$(BUILD_DIR)/mpi_interface.o: src/mpi_interface.cpp include/mpi_interface.h | $(BUILD_DIR) check-tools
+	$(MPICXX) $(CPPFLAGS) $(CXXFLAGS) -Iinclude -MMD -MP -c "$<" -o "$@"
+
+$(BUILD_DIR)/%.o: src/%.cu $(CUDA_HEADERS) | $(BUILD_DIR) check-tools
+	$(NVCC) $(CPPFLAGS) $(NVCCFLAGS) $(ARCH_FLAGS) $(HOST_FLAGS) $(MPI_CPPFLAGS) -DOMPI_SKIP_MPICXX=1 -DMPICH_SKIP_MPICXX=1 -Iinclude -MMD -MP -c "$<" -o "$@"
+
+$(TARGET): $(OBJECTS)
+	$(MPICXX) $(LDFLAGS) $(OBJECTS) -L"$(CUDA_LIBDIR)" -Wl,-rpath,"$(CUDA_LIBDIR)" -lcudart $(LDLIBS) -o "$@"
+
+serial: $(SERIAL_TARGET)
+$(SERIAL_TARGET): src/serial.cpp include/heat_common.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Iinclude "$<" -o "$@"
+
+host-test: $(BUILD_DIR)/cuda_host_tests
+	mkdir -p "$(abspath $(BUILD_DIR))/host-test-data"
+	"$(BUILD_DIR)/cuda_host_tests" "$(CURDIR)" "$(abspath $(BUILD_DIR))/host-test-data"
+
+$(BUILD_DIR)/cuda_host_tests: tests/cuda_host_tests.cpp include/cuda_host_utils.h include/heat_common.h include/validation.h | $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Iinclude "$<" -o "$@"
+
+show-config:
+	@printf '%s\n' 'MPICXX=$(MPICXX)' 'NVCC=$(NVCC)' 'CUDA_HOME=$(CUDA_HOME)' 'CUDA_LIBDIR=$(CUDA_LIBDIR)' 'MPI_CPPFLAGS=$(MPI_CPPFLAGS)' 'CUDA_ARCH=$(CUDA_ARCH)' 'CUDA_HOST_CXX=$(CUDA_HOST_CXX)'
+
+-include $(OBJECTS:.o=.d)

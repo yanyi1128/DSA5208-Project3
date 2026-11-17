@@ -6,6 +6,7 @@
 /mpi_interface_test
 /heat_serial
 /heat_mpi_cuda
+/build/
 
 # Python caches
 __pycache__/
@@ -13,6 +14,7 @@ __pycache__/
 
 # Raw experiment runs (includes job binaries and diagnostics)
 /results/runs/
+/results/local_runs/
 *.log
 *.stdout
 *.stderr
